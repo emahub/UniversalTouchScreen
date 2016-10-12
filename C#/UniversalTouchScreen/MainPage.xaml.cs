@@ -21,6 +21,8 @@ using Windows.UI.Xaml.Navigation;
 using Windows.UI.Xaml.Shapes;
 using Windows.Devices.Input;
 
+using System.Diagnostics;
+
 namespace UniversalTouchScreen
 {
     // Thanks ProfessorWeb.ru site - > http://professorweb.ru/my/windows8/rt-ext/level1/1_4.php   (please use Google Translate)
@@ -33,74 +35,122 @@ namespace UniversalTouchScreen
 
         private SortedSet<uint> setId = new SortedSet<uint>();
 
-        private void gridPad_PointerMoved(object sender, PointerRoutedEventArgs e)
+        private Dictionary<uint, Color> colorDic = new Dictionary<uint, Color>();
+
+        void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            IList<Windows.UI.Input.PointerPoint> IlistPointer = e.GetIntermediatePoints(gridPad);
-            int intPointerCount = IlistPointer.Count();
+            throw new NotImplementedException();
+        }
+
+        private void gridPad_PointerEntered(object sender, PointerRoutedEventArgs e)
+        {
+            Debug.WriteLine("PointerEntered");
+        }
+
+        private void gridPad_PointerExited(object sender, PointerRoutedEventArgs e)
+        {
+            Debug.WriteLine("PointerExited");
+        }
+
+        private void gridPad_PointerCanceled(object sender, PointerRoutedEventArgs e)
+        {
+            Debug.WriteLine("PointerCanceled");
+        }
+
+        private void gridPad_PointerPressed(object sender, PointerRoutedEventArgs e)
+        {
+            Debug.WriteLine("PointerPressed");
+            Debug.WriteLine(e.Pointer.PointerId);
 
             byte[] rgb = new byte[3];
             (new Random()).NextBytes(rgb);
             Color color = Color.FromArgb(255, rgb[0], rgb[1], rgb[2]);
+            colorDic.Add(e.Pointer.PointerId, color);
+        }
 
-            var blnIsMouse = e.Pointer.PointerDeviceType == PointerDeviceType.Mouse;
+        private void gridPad_PointerReleased(object sender, PointerRoutedEventArgs e)
+        {
+            Debug.WriteLine("PointerReleased");
+            Debug.WriteLine(e.Pointer.PointerId);
 
-            //Pointer saved in reversed mode ...
-            for (int i = intPointerCount - 1; i >= 0; i--)
+            colorDic.Remove(e.Pointer.PointerId);
+        }
+
+
+        private void gridPad_PointerMoved(object sender, PointerRoutedEventArgs e)
+        {
+            Debug.WriteLine("PointerMoved");
+            Debug.WriteLine(e.Pointer.PointerId);
+
+            if (colorDic.ContainsKey(e.Pointer.PointerId))
             {
-                Windows.UI.Input.PointerPoint pointer = IlistPointer[i];
+                // if PointerId is set 1, this function works with click and drag.    
 
-                // User PointerId for identify sequence (line) - if needed
-                setId.Add(pointer.PointerId); // Add to Set - Set Automatically does not include duplicate Id ... 
+                IList<Windows.UI.Input.PointerPoint> IlistPointer = e.GetIntermediatePoints(gridPad);
+                int intPointerCount = IlistPointer.Count();
 
-                Point point = pointer.Position;
+                Color color = colorDic[e.Pointer.PointerId];
 
-                // Prevent adding ellipse if mouse over grid and not left pressed ...
-                if (blnIsMouse && !pointer.Properties.IsLeftButtonPressed) continue; 
-                
-                //Properties -  https://msdn.microsoft.com/en-us/library/windows.ui.input.pointerpointproperties.aspx
-                //if your devise has stylus ...
-                float pressure = pointer.Properties.Pressure;
+                var blnIsMouse = e.Pointer.PointerDeviceType == PointerDeviceType.Mouse;
 
-                // 48 just randomly chosen value...
-                // value pressure always 0.5 if not pen (stylus) ...
-
-
-                // Pay attention about simulator - pressure will be very small 
-                 pressure = 1; // use for simulate
-
-                double w = 48.0 * pressure;
-                double h = 48.0 * pressure;
-
-                if (point.X < w / 2.0 || point.X > gridPad.ActualWidth - w / 2)
+                //Pointer saved in reversed mode ...
+                for (int i = intPointerCount - 1; i >= 0; i--)
                 {
-                    continue;  // add ellipse only on grid
+                    Windows.UI.Input.PointerPoint pointer = IlistPointer[i];
+
+                    // User PointerId for identify sequence (line) - if needed
+                    setId.Add(pointer.PointerId); // Add to Set - Set Automatically does not include duplicate Id ... 
+
+                    Point point = pointer.Position;
+
+                    // Prevent adding ellipse if mouse over grid and not left pressed ...
+                    if (blnIsMouse && !pointer.Properties.IsLeftButtonPressed) continue;
+
+                    //Properties -  https://msdn.microsoft.com/en-us/library/windows.ui.input.pointerpointproperties.aspx
+                    //if your devise has stylus ...
+                    float pressure = pointer.Properties.Pressure;
+
+                    // 48 just randomly chosen value...
+                    // value pressure always 0.5 if not pen (stylus) ...
+
+
+                    // Pay attention about simulator - pressure will be very small 
+                    pressure = 1; // use for simulate
+
+                    double w = 48.0 * pressure;
+                    double h = 48.0 * pressure;
+
+                    if (point.X < w / 2.0 || point.X > gridPad.ActualWidth - w / 2)
+                    {
+                        continue;  // add ellipse only on grid
+                    }
+
+                    if (point.Y < h / 2.0 || point.Y > gridPad.ActualHeight - h / 2)
+                    {
+                        continue; // add ellipse only on grid
+                    }
+
+                    var tr = new TranslateTransform();
+                    tr.X = point.X - gridPad.ActualWidth / 2.0;
+                    tr.Y = point.Y - gridPad.ActualHeight / 2.0;
+
+                    Ellipse el = new Ellipse()
+                    {
+                        Width = w,
+                        Height = h,
+                        Fill = new SolidColorBrush(color),
+                        RenderTransform = tr,
+                        Visibility = Visibility.Visible
+                    };
+
+                    gridPad.Children.Add(el);
+
                 }
 
-                if (point.Y < h / 2.0 || point.Y > gridPad.ActualHeight - h / 2)
-                {
-                    continue; // add ellipse only on grid
-                }
+                txtInfo.Text = " " + setId.Count().ToString() + " lines ...";
 
-                var tr = new TranslateTransform();
-                tr.X = point.X - gridPad.ActualWidth / 2.0;
-                tr.Y = point.Y - gridPad.ActualHeight / 2.0;
-
-                Ellipse el = new Ellipse()
-                {
-                    Width = w,
-                    Height = h,
-                    Fill = new SolidColorBrush(color),
-                    RenderTransform = tr,
-                    Visibility = Visibility.Visible
-                };
-
-                gridPad.Children.Add(el);
-
+                // base.OnPointerMoved(e); //You can see differences if uncomment this line
             }
-
-            txtInfo.Text = " " + setId.Count().ToString() + " lines ...";
-
-            // base.OnPointerMoved(e); //You can see differences if uncomment this line
         }
 
         private void btnClearAll_Click(object sender, RoutedEventArgs e)
@@ -117,6 +167,12 @@ namespace UniversalTouchScreen
             txtInfo.Text = "0 - lines ...";
 
         }
+
+        private void gridPad_ManipulationDelta(object sender, ManipulationDeltaRoutedEventArgs e) { }
+
+        private void gridPad_ManipulationCompleted(object sender, ManipulationCompletedRoutedEventArgs e) { }
+
+        private void gridPad_ManipulationStarted(object sender, ManipulationStartedRoutedEventArgs e) { }
 
     }
 }

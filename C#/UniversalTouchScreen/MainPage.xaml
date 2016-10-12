@@ -21,9 +21,12 @@
 
 
         <Button x:Name="btnClearAll"  Margin="12,0" Grid.Row="0" Grid.ColumnSpan="2" VerticalAlignment="Top" HorizontalAlignment="Stretch" Content="Clear All" Click="btnClearAll_Click"  />
-       
+
         <Grid
-            Name="gridPad" Grid.ColumnSpan="2" Grid.Row="1" Margin="10" Background="#FFEAE9E9"  PointerMoved="gridPad_PointerMoved" />
+            Name="gridPad" Grid.ColumnSpan="2" Grid.Row="1" Margin="10" Background="#FFEAE9E9"
+            PointerMoved="gridPad_PointerMoved" PointerReleased="gridPad_PointerReleased"
+            PointerEntered="gridPad_PointerEntered" PointerPressed="gridPad_PointerPressed"
+            PointerExited="gridPad_PointerExited" PointerCanceled="gridPad_PointerCanceled"/>
         <TextBlock x:Name="txtInfo" Text="MultiTouch "  Margin="10,0,12,0" Grid.Row="2" Grid.ColumnSpan="2" />
 
     </Grid>
