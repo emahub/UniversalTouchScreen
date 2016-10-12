@@ -37,6 +37,8 @@ namespace UniversalTouchScreen
 
         private Dictionary<uint, Color> colorDic = new Dictionary<uint, Color>();
 
+        private Random r = new Random(1000);
+
         void Page_Loaded(object sender, RoutedEventArgs e)
         {
             throw new NotImplementedException();
@@ -63,9 +65,10 @@ namespace UniversalTouchScreen
             Debug.WriteLine(e.Pointer.PointerId);
 
             byte[] rgb = new byte[3];
-            (new Random()).NextBytes(rgb);
-            Color color = Color.FromArgb(255, rgb[0], rgb[1], rgb[2]);
+
+            Color color = Color.FromArgb(255, (byte)r.Next(255), (byte)r.Next(255), (byte)r.Next(255));
             colorDic.Add(e.Pointer.PointerId, color);
+            
         }
 
         private void gridPad_PointerReleased(object sender, PointerRoutedEventArgs e)
